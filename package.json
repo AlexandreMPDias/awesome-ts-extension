@@ -13,6 +13,7 @@
   "categories": [
     "Other"
   ],
+  "publisher": "AlexandreDias",
   "activationEvents": [
     "onCommand:extension.helloWorld",
     "onCommand:extension.awesomeDoc"
