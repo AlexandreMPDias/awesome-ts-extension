@@ -2,10 +2,7 @@
   "name": "awesome-ts-extension",
   "displayName": "awesome-ts-extension",
   "description": "Extensions to help usage of Typescript on VsCode",
-  "version": "0.0.4",
-  "engines": {
-    "vscode": "^1.36.0"
-  },
+  "version": "0.0.5",
   "repository": {
     "type": "git",
     "url": "https://github.com/AlexandreMPDias/awesome-ts-extension"

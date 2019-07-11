@@ -7,11 +7,76 @@ interface IFuncValues {
 	retType: string;
 }
 
+class Commentify {
+	readonly values: IFuncValues;
+	readonly identation: number;
+
+	constructor(values: IFuncValues, tabIdentation: number = 0) {
+		this.values = values;
+		this.identation = tabIdentation;
+	}
+
+	/**
+	 * Commentify the Arguments
+	 * 
+	 * @return {string[]} an array of lines to be rendered.
+	 */
+	commentifyArgs(): string[] {
+		const retVal: string[] = [];
+		if (this.values.args.length > 0) {
+			this.values.args.forEach(entry => {
+				retVal.push(` * @param {${entry.type}} ${entry.name} `);
+			});
+		}
+		return retVal;
+	}
+
+	/**
+	 * Commentify the Return
+	 * 
+	 * @return {string} a line to be rendered.
+	 */
+	commentifyRet(): string {
+		if (this.values.retType.length > 0) {
+			return ` * @return {${this.values.retType}} `;
+		}
+		return '';
+	}
+
+	all() {
+		const lines = [];
+		const start = '/**';
+		const prepend = ' * ';
+		const end = ' */';
+		lines.push(start);
+		lines.push(`${prepend}${this.values.name}`);
+		this.commentifyArgs().forEach((argLine, index) => {
+			if (index === 0) {
+				lines.push(prepend);
+			}
+			lines.push(argLine);
+		});
+		const retLine = this.commentifyRet();
+		if (retLine.length > 0) {
+			lines.push(prepend);
+			lines.push(retLine);
+		}
+		lines.push(end);
+		return lines.join('\n');
+	}
+}
+
+/**
+ * Filters the Selection
+ * @param {vscode.TextEditor} editor 
+ * 
+ * @return the function handler
+ */
 function handleSelection(editor: vscode.TextEditor): string {
 	return editor.document.getText(editor.selection)
 		.replace(/^(\w+\s)?(\w+\s?=\s?.+)/, '$2')
 		.replace(/\s|\n|\t/g, '')
-		.replace(/(.+)=>.+/, '$1');
+		.replace(/(.+)=>.+/, '$1')
 }
 
 function getIdentation(editor: vscode.TextEditor): number {
@@ -24,45 +89,44 @@ function tabs(size: number) {
 	return '';// new Array(size).fill("\t").join('');
 }
 
-function commentifyArgs(values: IFuncValues): string[] {
-	const retVal: string[] = [];
-	if (values.args.length > 0) {
-		values.args.forEach(entry => {
-			retVal.push(` * @param {${entry.type}} ${entry.name} `);
-		});
-	}
-	return retVal;
-}
+// function commentifyArgs(values: IFuncValues): string[] {
+// 	const retVal: string[] = [];
+// 	if (values.args.length > 0) {
+// 		values.args.forEach(entry => {
+// 			retVal.push(` * @param {${entry.type}} ${entry.name} `);
+// 		});
+// 	}
+// 	return retVal;
+// }
 
-function commentifyRet(values: IFuncValues): string {
-	if (values.retType.length > 0) {
-		return ` * @return {${values.retType}} `;
-	}
-	return '';
-}
+// function commentifyRet(values: IFuncValues): string {
+// 	if (values.retType.length > 0) {
+// 		return ` * @return {${values.retType}} `;
+// 	}
+// 	return '';
+// }
 
-function commentify(values: IFuncValues) {
-	const lines = [];
-	const start = '/**';
-	const prepend = ' * ';
-	const end = ' */';
-	lines.push(start);
-	lines.push(`${prepend}${values.name}`);
-	commentifyArgs(values).forEach((argLine, index) => {
-		if (index === 0) {
-			lines.push(prepend);
-		}
-		lines.push(argLine);
-	});
-	const retLine = commentifyRet(values);
-	if (retLine.length > 0) {
-		lines.push(prepend);
-		lines.push(retLine);
-	}
-	lines.push(end);
-	return lines.join('\n');
-}
-
+// function commentify(values: IFuncValues) {
+// 	const lines = [];
+// 	const start = '/**';
+// 	const prepend = ' * ';
+// 	const end = ' */';
+// 	lines.push(start);
+// 	lines.push(`${prepend}${values.name}`);
+// 	commentifyArgs(values).forEach((argLine, index) => {
+// 		if (index === 0) {
+// 			lines.push(prepend);
+// 		}
+// 		lines.push(argLine);
+// 	});
+// 	const retLine = commentifyRet(values);
+// 	if (retLine.length > 0) {
+// 		lines.push(prepend);
+// 		lines.push(retLine);
+// 	}
+// 	lines.push(end);
+// 	return lines.join('\n');
+// }
 
 function filterArguments(args: string): Array<{ name: string, type: string }> {
 	const array: Array<{ name: string, type: string }> = [];
@@ -103,9 +167,10 @@ async function handleCommand() {
 	try {
 		const header = handleSelection(editor);
 		const funcValues: IFuncValues = generateDOCObject(header);
+		const commentify = new Commentify(funcValues);
 		// vscode.window.showInformationMessage(getIdentation(editor) + '');
 
-		Help.prependComment(editor, commentify(funcValues));
+		Help.prependComment(editor, commentify.all());
 	} catch (e) {
 		vscode.window.showInformationMessage(`Awesome Extension Error: Malformed Selection.`);
 	}
