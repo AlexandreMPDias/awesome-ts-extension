@@ -2,7 +2,7 @@
   "name": "awesome-ts-extension",
   "displayName": "awesome-ts-extension",
   "description": "Extensions to help usage of Typescript on VsCode",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.36.0"
   },
@@ -29,6 +29,7 @@
     "menus": {
       "editor/context": [
         {
+          "when": "editorTextFocus",
           "command": "extension.awesomeDoc",
           "group": "YourGroup@1"
         }

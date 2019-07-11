@@ -67,16 +67,20 @@ class Commentify {
 }
 
 /**
- * Filters the Selection
- * @param {vscode.TextEditor} editor 
- * 
- * @return the function handler
+ * Filters the
+ * @param editor 
  */
 function handleSelection(editor: vscode.TextEditor): string {
-	return editor.document.getText(editor.selection)
+	const singleLine = editor.document.getText(editor.selection)
 		.replace(/^(\w+\s)?(\w+\s?=\s?.+)/, '$2')
 		.replace(/\s|\n|\t/g, '')
-		.replace(/(.+)=>.+/, '$1')
+		.replace(/(.+)=>.+/, '$1');
+	const fE = singleLine.indexOf("=");
+	const lE = singleLine.lastIndexOf("=");
+	if (fE !== lE) {
+		return singleLine.substring(0, lE);
+	}
+	return singleLine;
 }
 
 function getIdentation(editor: vscode.TextEditor): number {
