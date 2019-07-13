@@ -13,7 +13,7 @@ class Help {
 
 	prependComment(editor: vscode.TextEditor, comment: string) {
 		if (editor) {
-			editor.edit(editBuilder => {
+			editor.edit((editBuilder: any) => {
 				editBuilder.replace(editor.selection, '\n' + comment + '\n' + editor.document.getText(editor.selection))
 			});
 		}
