@@ -25,7 +25,7 @@ class Commentify {
 		const retVal: string[] = [];
 		if (this.values.args.length > 0) {
 			this.values.args.forEach(entry => {
-				retVal.push(` * @param {${entry.type}} ${entry.name} `);
+				retVal.push(` * @param {${entry.type || 'any'}} ${entry.name} `);
 			});
 		}
 		return retVal;
@@ -93,53 +93,15 @@ function tabs(size: number) {
 	return '';// new Array(size).fill("\t").join('');
 }
 
-// function commentifyArgs(values: IFuncValues): string[] {
-// 	const retVal: string[] = [];
-// 	if (values.args.length > 0) {
-// 		values.args.forEach(entry => {
-// 			retVal.push(` * @param {${entry.type}} ${entry.name} `);
-// 		});
-// 	}
-// 	return retVal;
-// }
-
-// function commentifyRet(values: IFuncValues): string {
-// 	if (values.retType.length > 0) {
-// 		return ` * @return {${values.retType}} `;
-// 	}
-// 	return '';
-// }
-
-// function commentify(values: IFuncValues) {
-// 	const lines = [];
-// 	const start = '/**';
-// 	const prepend = ' * ';
-// 	const end = ' */';
-// 	lines.push(start);
-// 	lines.push(`${prepend}${values.name}`);
-// 	commentifyArgs(values).forEach((argLine, index) => {
-// 		if (index === 0) {
-// 			lines.push(prepend);
-// 		}
-// 		lines.push(argLine);
-// 	});
-// 	const retLine = commentifyRet(values);
-// 	if (retLine.length > 0) {
-// 		lines.push(prepend);
-// 		lines.push(retLine);
-// 	}
-// 	lines.push(end);
-// 	return lines.join('\n');
-// }
-
 function filterArguments(args: string): Array<{ name: string, type: string }> {
 	const array: Array<{ name: string, type: string }> = [];
 	args.split(",").forEach((valueAndType: string) => {
-		const [name, type] = valueAndType.split(':');
-		array.push({ name, type })
+		if (valueAndType.length > 0) {
+			const [name, type] = valueAndType.split(':');
+			array.push({ name, type });
+		}
+
 	});
-
-
 	return array;
 }
 
