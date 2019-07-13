@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { EditorService, StackerService } from '../../services';
 
 function activate (context: vscode.ExtensionContext)
 {
