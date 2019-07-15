@@ -1,17 +1,21 @@
 import * as vscode from 'vscode';
-import Help from './helpers';
+import { _editor } from '../../../services';
 
-interface IFuncValues {
+
+interface IFuncValues
+{
 	name: string;
 	args: Array<{ name: string, type: string }>;
 	retType: string;
 }
 
-class Commentify {
+class Commentify
+{
 	readonly values: IFuncValues;
 	readonly identation: number;
 
-	constructor(values: IFuncValues, tabIdentation: number = 0) {
+	constructor (values: IFuncValues, tabIdentation: number = 0)
+	{
 		this.values = values;
 		this.identation = tabIdentation;
 	}
@@ -21,10 +25,12 @@ class Commentify {
 	 * 
 	 * @return {string[]} an array of lines to be rendered.
 	 */
-	commentifyArgs(): string[] {
+	commentifyArgs (): string[]
+	{
 		const retVal: string[] = [];
 		if (this.values.args.length > 0) {
-			this.values.args.forEach(entry => {
+			this.values.args.forEach(entry =>
+			{
 				retVal.push(` * @param {${entry.type || 'any'}} ${entry.name} `);
 			});
 		}
@@ -36,21 +42,24 @@ class Commentify {
 	 * 
 	 * @return {string} a line to be rendered.
 	 */
-	commentifyRet(): string {
+	commentifyRet (): string
+	{
 		if (this.values.retType.length > 0) {
 			return ` * @return {${this.values.retType}} `;
 		}
 		return '';
 	}
 
-	all() {
+	all ()
+	{
 		const lines = [];
 		const start = '/**';
 		const prepend = ' * ';
 		const end = ' */';
 		lines.push(start);
 		lines.push(`${prepend}${this.values.name}`);
-		this.commentifyArgs().forEach((argLine, index) => {
+		this.commentifyArgs().forEach((argLine, index) =>
+		{
 			if (index === 0) {
 				lines.push(prepend);
 			}
@@ -67,10 +76,11 @@ class Commentify {
 }
 
 /**
- * Filters the
+ * Filters the selection looking for an arrow function
  * @param editor 
  */
-function handleSelection(editor: vscode.TextEditor): string {
+function handleSelection (editor: vscode.TextEditor): string
+{
 	const singleLine = editor.document.getText(editor.selection)
 		.replace(/^(\w+\s)?(\w+\s?=\s?.+)/, '$2')
 		.replace(/\s|\n|\t/g, '')
@@ -83,19 +93,23 @@ function handleSelection(editor: vscode.TextEditor): string {
 	return singleLine;
 }
 
-function getIdentation(editor: vscode.TextEditor): number {
+function getIdentation (editor: vscode.TextEditor): number
+{
 	// ! TODO
 	return ''.replace(/^(\t+).+/g, '$1').length;
 }
 
-function tabs(size: number) {
+function tabs (size: number)
+{
 	// TODO
 	return '';// new Array(size).fill("\t").join('');
 }
 
-function filterArguments(args: string): Array<{ name: string, type: string }> {
+function filterArguments (args: string): Array<{ name: string, type: string }>
+{
 	const array: Array<{ name: string, type: string }> = [];
-	args.split(",").forEach((valueAndType: string) => {
+	args.split(",").forEach((valueAndType: string) =>
+	{
 		if (valueAndType.length > 0) {
 			const [name, type] = valueAndType.split(':');
 			array.push({ name, type });
@@ -105,7 +119,8 @@ function filterArguments(args: string): Array<{ name: string, type: string }> {
 	return array;
 }
 
-function generateDOCObject(text: string): IFuncValues {
+function generateDOCObject (text: string): IFuncValues
+{
 	const values: IFuncValues = {
 		name: '',
 		args: [],
@@ -125,7 +140,8 @@ function generateDOCObject(text: string): IFuncValues {
 	return values;
 }
 
-async function handleCommand() {
+async function handleCommand (context: vscode.ExtensionContext)
+{
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		return '';
@@ -136,23 +152,10 @@ async function handleCommand() {
 		const commentify = new Commentify(funcValues);
 		// vscode.window.showInformationMessage(getIdentation(editor) + '');
 
-		Help.prependComment(editor, commentify.all());
+		_editor.prependComment(commentify.all());
 	} catch (e) {
 		vscode.window.showInformationMessage(`Awesome Extension Error: Malformed Selection.`);
 	}
 }
 
-function activate(context: vscode.ExtensionContext) {
-	// this code runs whenever your click 'Create Gist' from the context menu in your browser.
-	let disposable = vscode.commands.registerCommand("extension.awesomeDoc", () => {
-		handleCommand();
-	});
-	context.subscriptions.push(disposable);
-}
-
-function deactivate() { }
-
-
-export default {
-	activate, deactivate
-};
+export default handleCommand

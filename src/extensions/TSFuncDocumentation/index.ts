@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { EditorService, StackerService } from '../../services';
+import { _editor } from '../../services';
+
 
 interface IFuncValues
 {
@@ -8,12 +9,88 @@ interface IFuncValues
 	retType: string;
 }
 
+class Commentify
+{
+	readonly values: IFuncValues;
+	readonly identation: number;
+
+	constructor (values: IFuncValues, tabIdentation: number = 0)
+	{
+		this.values = values;
+		this.identation = tabIdentation;
+	}
+
+	/**
+	 * Commentify the Arguments
+	 * 
+	 * @return {string[]} an array of lines to be rendered.
+	 */
+	commentifyArgs = (): string[] =>
+	{
+		const retVal: string[] = [];
+		if (this.values.args.length > 0) {
+			this.values.args.forEach(entry =>
+			{
+				retVal.push(` * @param {${entry.type || 'any'}} ${entry.name} `);
+			});
+		}
+		return retVal;
+	}
+
+	/**
+	 * Commentify the Return
+	 * 
+	 * @return {string} a line to be rendered.
+	 */
+	commentifyRet (): string
+	{
+		if (this.values.retType.length > 0) {
+			return ` * @return {${this.values.retType}} `;
+		}
+		return '';
+	}
+
+	all ()
+	{
+		const lines = [];
+		const start = '/**';
+		const prepend = ' * ';
+		const end = ' */';
+		lines.push(start);
+		lines.push(`${prepend}${this.values.name}`);
+		this.commentifyArgs().forEach((argLine, index) =>
+		{
+			if (index === 0) {
+				lines.push(prepend);
+			}
+			lines.push(argLine);
+		});
+		const retLine = this.commentifyRet();
+		if (retLine.length > 0) {
+			lines.push(prepend);
+			lines.push(retLine);
+		}
+		lines.push(end);
+		return lines.join('\n');
+	}
+}
+
+/**
+ * Filters the selection looking for an arrow function
+ * @param editor 
+ */
 function handleSelection (editor: vscode.TextEditor): string
 {
-	return editor.document.getText(editor.selection)
+	const singleLine = editor.document.getText(editor.selection)
 		.replace(/^(\w+\s)?(\w+\s?=\s?.+)/, '$2')
 		.replace(/\s|\n|\t/g, '')
 		.replace(/(.+)=>.+/, '$1');
+	const fE = singleLine.indexOf("=");
+	const lE = singleLine.lastIndexOf("=");
+	if (fE !== lE) {
+		return singleLine.substring(0, lE);
+	}
+	return singleLine;
 }
 
 function getIdentation (editor: vscode.TextEditor): number
@@ -28,61 +105,17 @@ function tabs (size: number)
 	return '';// new Array(size).fill("\t").join('');
 }
 
-function commentifyArgs (values: IFuncValues): string[]
-{
-	const retVal: string[] = [];
-	if (values.args.length > 0) {
-		values.args.forEach(entry =>
-		{
-			retVal.push(` * @param {${entry.type}} ${entry.name} `);
-		});
-	}
-	return retVal;
-}
-
-function commentifyRet (values: IFuncValues): string
-{
-	if (values.retType.length > 0) {
-		return ` * @return {${values.retType}} `;
-	}
-	return '';
-}
-
-function commentify (values: IFuncValues)
-{
-	const lines = [];
-	const start = '/**';
-	const prepend = ' * ';
-	const end = ' */';
-	lines.push(start);
-	lines.push(`${prepend}${values.name}`);
-	commentifyArgs(values).forEach((argLine, index) =>
-	{
-		if (index === 0) {
-			lines.push(prepend);
-		}
-		lines.push(argLine);
-	});
-	const retLine = commentifyRet(values);
-	if (retLine.length > 0) {
-		lines.push(prepend);
-		lines.push(retLine);
-	}
-	lines.push(end);
-	return lines.join('\n');
-}
-
-
 function filterArguments (args: string): Array<{ name: string, type: string }>
 {
 	const array: Array<{ name: string, type: string }> = [];
 	args.split(",").forEach((valueAndType: string) =>
 	{
-		const [name, type] = valueAndType.split(':');
-		array.push({ name, type })
+		if (valueAndType.length > 0) {
+			const [name, type] = valueAndType.split(':');
+			array.push({ name, type });
+		}
+
 	});
-
-
 	return array;
 }
 
@@ -107,7 +140,7 @@ function generateDOCObject (text: string): IFuncValues
 	return values;
 }
 
-async function handleCommand ()
+async function handleCommand (context: vscode.ExtensionContext)
 {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
@@ -116,12 +149,22 @@ async function handleCommand ()
 	try {
 		const header = handleSelection(editor);
 		const funcValues: IFuncValues = generateDOCObject(header);
-		EditorService.prependComment(editor, commentify(funcValues));
+		const commentify = new Commentify(funcValues);
+		// vscode.window.showInformationMessage(getIdentation(editor) + '');
+
+		_editor.prependComment(commentify.all());
 	} catch (e) {
 		vscode.window.showInformationMessage(`Awesome Extension Error: Malformed Selection.`);
 	}
 }
 
+
 function deactivate () { }
 
-StackerService.subscribe("extension.awesomeDoc", handleCommand, deactivate);
+const exp: IExtension = {
+	name: "extension.awesomeDoc",
+	command: handleCommand,
+	deactivate
+}
+
+export default exp
