@@ -15,12 +15,12 @@ class MultiCommands
 		const name = selected.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
 		switch (selected) {
 			case 'ImportOrganizer': {
-				window.show(`Running ${name}`);
+				window.running(`${name}`);
 				importOrganizer(context);
 				break;
 			}
 			case 'Generate TSX Document': {
-				window.show(`Running ${name}`);
+				window.running(`${name}`);
 				generateTSXDoc(context);
 				break;
 			}

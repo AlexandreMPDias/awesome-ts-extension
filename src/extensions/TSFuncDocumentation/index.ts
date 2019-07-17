@@ -167,4 +167,4 @@ const exp: IExtension = {
 	deactivate
 }
 
-export default exp
+export default exp;

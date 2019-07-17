@@ -119,7 +119,7 @@ async function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 	// window.show(vscode.Uri.file);
 	switch (selected) {
 		case 'Create Awesome Native Component': {
-			window.show(`Running: ${selected}`);
+			window.running(`${selected}`);
 			const dirName = await _editor.getInput('Name your Awesome Component');
 			if (dirName && dirName.length > 0) {
 				const cfn = filterPath(dirName);
@@ -131,7 +131,7 @@ async function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 			break;
 		}
 		case 'Create Awesome Web Component': {
-			window.show(`Running ${selected}`);
+			window.running(`${selected}`);
 			const dirName = await _editor.getInput('Name your Awesome Component');
 			if (dirName && dirName.length > 0) {
 				const cfn = filterPath(dirName);
@@ -143,7 +143,7 @@ async function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 			break;
 		}
 		case 'Create Awesome Redux-Store Directory': {
-			window.show(`Running ${selected}`);
+			window.running(`${selected}`);
 			const dirName = await _editor.getInput('Name your Awesome Store');
 			if (dirName && dirName.length > 0) {
 				const cfn = filterPath(dirName);

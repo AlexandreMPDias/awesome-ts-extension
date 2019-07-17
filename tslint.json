@@ -3,9 +3,9 @@
     "no-string-throw": true,
     "no-unused-expression": true,
     "no-duplicate-variable": true,
-    "curly": true,
+    "curly": false,
     "class-name": true,
-    "semicolon": [true],
+    "semicolon": false,
     "triple-equals": true
   },
   "defaultSeverity": "warning"
