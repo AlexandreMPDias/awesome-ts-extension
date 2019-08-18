@@ -85,7 +85,7 @@ export interface I${upperCamelCase}State {
 const exportDefault: FileTemplate = {
 	index: __indexContent,
 	styles: __style,
-	types: __type
+	types: __type,
 }
 
 export default exportDefault;

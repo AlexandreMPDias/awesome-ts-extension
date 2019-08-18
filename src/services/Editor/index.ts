@@ -29,9 +29,10 @@ class Help
 	{
 		const editor = this.getEditor();
 		if (editor) {
+			const range = this.getStartOfLine(editor.selection);
 			editor.edit((editBuilder: any) =>
 			{
-				editBuilder.replace(editor.selection, '\n' + comment + '\n' + editor.document.getText(editor.selection))
+				editBuilder.replace(range, '\n' + comment + '\n' + editor.document.getText(range))
 			});
 		}
 	}
@@ -65,6 +66,21 @@ class Help
 			});
 		}
 
+	}
+
+	get endOfFile (): vscode.Position
+	{
+		const file = vscode.window.activeTextEditor!.document.getText().split('\n');
+		const fileSize = file.length;
+		const lastLineSize = file[fileSize - 1].length;
+		return new vscode.Position(fileSize, lastLineSize);
+	}
+
+	getStartOfLine (range: vscode.Range): vscode.Range
+	{
+		const start: vscode.Position = new vscode.Position(range.start.line, 0);
+		const end: vscode.Position = range.end;
+		return new vscode.Range(start, end);
 	}
 
 	private ensureLimits (limits: Position): RequiredPosition

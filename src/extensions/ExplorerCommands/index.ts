@@ -1,31 +1,33 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import { _editor, window } from '../../services';
-import { CommandKeys, IFinalTemplate, Key, StoreTemplateKeys } from './types';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import { _editor, window } from "../../services";
+import { CommandKeys, IFinalTemplate, Key, StoreTemplateKeys } from "./types";
 
-import nativeComponentsTemplates from './NativeComponentsTemplates';
-import webComponentsTemplates from './WebComponentsTemplates';
-import reduxStoreTemplates from './ReduxStoreTemplates';
+import nativeComponentsTemplates from "./NativeComponentsTemplates";
+import webComponentsTemplates from "./WebDumbComponentTemplates";
+import reduxStoreTemplates from "./ReduxStoreTemplates";
+import containerComponentTemplates from './ContainerComponentTemplates'
 
 String.prototype.capitalize = function ()
 {
 	return this.charAt(0).toUpperCase() + this.slice(1);
-}
+};
 
 String.prototype.uncapitalize = function ()
 {
 	return this.charAt(0).toLowerCase() + this.slice(1);
-}
+};
 
 function filterPath (input: string, uncapitalize: boolean = true): string
 {
 	if (uncapitalize) {
-		return input.replace(/-/g, '_').replace(/\W+/g, '').uncapitalize();
-
+		return input
+			.replace(/-/g, "_")
+			.replace(/\W+/g, "")
+			.uncapitalize();
 	}
-	return input.replace(/-/g, '_').replace(/\W+/g, '');
-
+	return input.replace(/-/g, "_").replace(/\W+/g, "");
 }
 
 function createFile (source: string, fileName: string, content: string)
@@ -33,7 +35,7 @@ function createFile (source: string, fileName: string, content: string)
 	const editor = _editor.getEditor();
 	if (editor) {
 		const filePath = path.join(source, fileName);
-		fs.writeFileSync(filePath, content, 'utf8');
+		fs.writeFileSync(filePath, content, "utf8");
 	}
 }
 
@@ -46,20 +48,23 @@ function createNewDirectory (dir: string): boolean
 	} catch (e) {
 		console.error(e);
 		return false;
-
 	}
 }
 
-function handleTemplateCreation (source: string, folderName: string, templates: IFinalTemplate[])
+function handleTemplateCreation (
+	source: string,
+	folderName: string,
+	templates: IFinalTemplate[]
+)
 {
 	const newSource = path.join(source, folderName);
 	if (createNewDirectory(newSource)) {
 		templates.forEach((template: IFinalTemplate) =>
 		{
 			const { fileName, content } = template;
-			window.show(`Creating file ${fileName}`)
+			window.show(`Creating file ${fileName}`);
 			createFile(newSource, fileName, content);
-		})
+		});
 	} else {
 		_editor.error(`Failed creating directory ${newSource}`);
 	}
@@ -67,88 +72,163 @@ function handleTemplateCreation (source: string, folderName: string, templates: 
 
 /**
  * Generates an array of Final Templates for a ReduxStore
- * @param folderName 
- * @param template 
+ * @param folderName
+ * @param template
  */
-function generateReduxTemplate (folderName: string, template: any): IFinalTemplate[]
+function generateReduxTemplate (
+	folderName: string,
+	template: any
+): IFinalTemplate[]
 {
-	const lowerCamelCase = folderName.uncapitalize()//folderName.charAt(0).toLowerCase() + folderName.slice(1);
-	const upperCamelCase = folderName.capitalize()//folderName.charAt(0).toUpperCase() + folderName.slice(1);
-	const keys: StoreTemplateKeys[] = ['actions', 'operations', 'selectors', 'reducers', 'types'];
+	const lowerCamelCase = folderName.uncapitalize(); //folderName.charAt(0).toLowerCase() + folderName.slice(1);
+	const upperCamelCase = folderName.capitalize(); //folderName.charAt(0).toUpperCase() + folderName.slice(1);
+	const keys: StoreTemplateKeys[] = [
+		"actions",
+		"operations",
+		"selectors",
+		"reducers",
+		"types"
+	];
 	const contentOfEachFile: IFinalTemplate[] = keys.map((key: Key) =>
 	{
 		// const upperKey = key.charAt(0).toUpperCase() + key.slice(1);
 		const upperKey = key.capitalize();
 		return {
 			fileName: `${lowerCamelCase}${upperKey}.ts`,
-			content: template[key]({ lowerCamelCase, upperCamelCase })
+			content: template[key as string]({ lowerCamelCase, upperCamelCase })
+		};
+	});
+	return contentOfEachFile;
+}
+
+function generateContainerTemplate (
+	folderName: string,
+	template: any
+): IFinalTemplate[]
+{
+	const lowerCamelCase =
+		folderName.charAt(0).toLowerCase() + folderName.slice(1);
+	const upperCamelCase =
+		folderName.charAt(0).toUpperCase() + folderName.slice(1);
+	const contentOfEachFile: IFinalTemplate[] = [
+		{
+			fileName: "index.ts",
+			content: template.index({ lowerCamelCase, upperCamelCase })
+		},
+		{
+			fileName: `${lowerCamelCase}Container.tsx`,
+			content: template.container({ lowerCamelCase, upperCamelCase })
+		},
+		{
+			fileName: `${lowerCamelCase}Types.ts`,
+			content: template.types({ lowerCamelCase, upperCamelCase })
 		}
-	})
+	];
 	return contentOfEachFile;
 }
 
 /**
  * Generates an array of Final Templates for a Component
- * @param folderName 
- * @param template 
+ * @param folderName
+ * @param template
  */
-function generateComponentTemplate (folderName: string, template: any): IFinalTemplate[]
+function generateComponentTemplate (
+	folderName: string,
+	template: any
+): IFinalTemplate[]
 {
-	const lowerCamelCase = folderName.charAt(0).toLowerCase() + folderName.slice(1);
-	const upperCamelCase = folderName.charAt(0).toUpperCase() + folderName.slice(1);
-	const contentOfEachFile: IFinalTemplate[] = [{
-		fileName: 'index.tsx',
-		content: template.index({ lowerCamelCase, upperCamelCase })
-	},
-	{
-		fileName: `${lowerCamelCase}Styles.ts`,
-		content: template.styles({ lowerCamelCase, upperCamelCase })
-	},
-	{
-		fileName: `${lowerCamelCase}Types.ts`,
-		content: template.types({ lowerCamelCase, upperCamelCase })
-	}];
+	const lowerCamelCase =
+		folderName.charAt(0).toLowerCase() + folderName.slice(1);
+	const upperCamelCase =
+		folderName.charAt(0).toUpperCase() + folderName.slice(1);
+	const contentOfEachFile: IFinalTemplate[] = [
+		{
+			fileName: "index.tsx",
+			content: template.index({ lowerCamelCase, upperCamelCase })
+		},
+		{
+			fileName: `${lowerCamelCase}Styles.ts`,
+			content: template.styles({ lowerCamelCase, upperCamelCase })
+		},
+		{
+			fileName: `${lowerCamelCase}Types.ts`,
+			content: template.types({ lowerCamelCase, upperCamelCase })
+		}
+	];
 	return contentOfEachFile;
 }
 
 async function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 {
-	const options: CommandKeys[] = ["Create Awesome Native Component", 'Create Awesome Web Component', 'Create Awesome Redux-Store Directory', 'Cancel']; // "Create Awesome Web Component"
+	const optionsKeys: CommandKeys[] = [
+		"Native Component",
+		"Web Component",
+		"Container",
+		"Redux-Store Directory"
+	];
+	const options: string[] = [
+		...optionsKeys.map(option => `Create Awesome ${option}`),
+		"Cancel"
+	];
 	const selectedDirectory = dirPath.fsPath;
-	const selected = await _editor.dropdown(options) as CommandKeys;
+	const selected = (await _editor.dropdown(options)) as CommandKeys;
+	const selectedKey = selected.replace(/^Create Awesome (.+)/, '$1') as CommandKeys;
 	// window.show(vscode.Uri.file);
-	switch (selected) {
-		case 'Create Awesome Native Component': {
+	switch (selectedKey) {
+		case "Native Component": {
 			window.show(`Running: ${selected}`);
-			const dirName = await _editor.getInput('Name your Awesome Component');
+			const dirName = await _editor.getInput("Name your Awesome Component");
 			if (dirName && dirName.length > 0) {
 				const cfn = filterPath(dirName);
-				const templates: IFinalTemplate[] = generateComponentTemplate(cfn, nativeComponentsTemplates);
+				const templates: IFinalTemplate[] = generateComponentTemplate(
+					cfn,
+					nativeComponentsTemplates
+				);
 				handleTemplateCreation(selectedDirectory, cfn, templates);
 			} else {
 				window.show(`Awesomefication Cancelled`);
 			}
 			break;
 		}
-		case 'Create Awesome Web Component': {
+		case "Web Component": {
 			window.show(`Running ${selected}`);
-			const dirName = await _editor.getInput('Name your Awesome Component');
+			const dirName = await _editor.getInput("Name your Awesome Component");
 			if (dirName && dirName.length > 0) {
 				const cfn = filterPath(dirName);
-				const templates: IFinalTemplate[] = generateComponentTemplate(cfn, webComponentsTemplates);
+				const templates: IFinalTemplate[] = generateComponentTemplate(
+					cfn,
+					webComponentsTemplates
+				);
 				handleTemplateCreation(selectedDirectory, cfn, templates);
 			} else {
 				window.show(`Awesomefication Cancelled`);
 			}
 			break;
 		}
-		case 'Create Awesome Redux-Store Directory': {
+		case "Container": {
 			window.show(`Running ${selected}`);
-			const dirName = await _editor.getInput('Name your Awesome Store');
+			const dirName = await _editor.getInput("Name your Awesome Container");
 			if (dirName && dirName.length > 0) {
 				const cfn = filterPath(dirName);
-				const templates: IFinalTemplate[] = generateReduxTemplate(cfn, reduxStoreTemplates);
-				console.log('Content Loaded');
+				const templates: IFinalTemplate[] = generateContainerTemplate(
+					cfn,
+					containerComponentTemplates
+				);
+				handleTemplateCreation(selectedDirectory, cfn, templates);
+			} else {
+				window.show(`Awesomefication Cancelled`);
+			}
+			break;
+		}
+		case "Redux-Store Directory": {
+			window.show(`Running ${selected}`);
+			const dirName = await _editor.getInput("Name your Awesome Store");
+			if (dirName && dirName.length > 0) {
+				const cfn = filterPath(dirName);
+				const templates: IFinalTemplate[] = generateReduxTemplate(
+					cfn,
+					reduxStoreTemplates
+				);
 				const chdir = path.join(selectedDirectory, cfn);
 				createNewDirectory(chdir);
 				handleTemplateCreation(chdir, "store", templates);
@@ -157,14 +237,15 @@ async function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 			}
 			break;
 		}
-		case 'Cancel': {
+		case "Cancel": {
 			window.show(`Awesomefication Cancelled`);
 			break;
-		} default: {
+		}
+		default: {
 			if (selected === undefined) {
 				window.show(`Awesomefication Cancelled`);
 			} else {
-				window.show(`Invalid Option ${selected}\nAwesomefication Cancelled`);
+				_editor.error(`Invalid Option ${selected}.\nAwesomefication Cancelled`);
 			}
 		}
 	}
@@ -176,6 +257,6 @@ const exp: IExtension = {
 	name: "extension.awesomifyExplorer",
 	command: command,
 	deactivate
-}
+};
 
-export default exp
+export default exp;

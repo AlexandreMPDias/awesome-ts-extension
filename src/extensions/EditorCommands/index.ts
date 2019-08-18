@@ -21,7 +21,7 @@ class MultiCommands
 			}
 			case 'Generate TSX Document': {
 				window.show(`Running ${name}`);
-				generateTSXDoc(context);
+				generateTSXDoc.command(context);
 				break;
 			}
 			case 'Cancel': {
