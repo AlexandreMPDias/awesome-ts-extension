@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 
+import { config } from '..';
+
 class Help
 {
 	async getInput (placeHolder: string)
@@ -9,14 +11,32 @@ class Help
 		});
 	}
 
+	running(str: string) {
+		if(config.property('showRunning')) {
+			vscode.window.showInformationMessage("Running: " + str);
+		}
+	}
+
 	show (str: string)
 	{
-		vscode.window.showInformationMessage(str);
+		if (config.property('showInfo')) {
+			vscode.window.showInformationMessage(str);
+		}
 	}
 
 	error (str: string)
 	{
-		vscode.window.showInformationMessage("[Error]: " + str);
+		if (config.property('showError')) {
+			vscode.window.showErrorMessage("[Error]: " + str);
+		}
+	}
+
+	warning (str: string)
+	{
+		if (config.property('showWarning')) {
+			vscode.window.showWarningMessage("[Warning]: " + str);
+		}
+
 	}
 
 	/**

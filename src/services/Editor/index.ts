@@ -85,7 +85,14 @@ class Help
 
 	private ensureLimits (limits: Position): RequiredPosition
 	{
-		const forceStart = (): { line: number, char: number } =>
+		const forceLimit = (limits: PositionField): PositionField =>
+		{
+			return {
+				line: limits.line < 0 ? 0 : limits.line,
+				char: limits.char < 0 ? 0 : limits.char
+			}
+		}
+		const forceStart = (): PositionField =>
 		{
 			if (limits.start) {
 				const { line, char } = limits.start;
@@ -93,14 +100,18 @@ class Help
 			} else {
 				return { line: 0, char: 0 };
 			}
-		}
+		};
 		const ret: RequiredPosition = {
-			start: forceStart(),
-			end: limits.end
+			start: forceLimit(forceStart()),
+			end: forceLimit(limits.end)
 		};
 		return ret;
 	}
 
+	/**
+	 * Get the Current ActiveTextEditor.
+	 * If undefined, it will print a warning
+	 */
 	getEditor (): typeof vscode.window.activeTextEditor
 	{
 		if (!vscode.window.activeTextEditor) {

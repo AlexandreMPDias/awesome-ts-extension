@@ -7,6 +7,13 @@
 
 type Command = (context: any, ...args: any[]) => void;
 
+interface AwesomeConfiguration
+{
+	showInfo: boolean;
+	showWarning: boolean;
+	showError: boolean;
+	showRunning: boolean;
+}
 
 interface IExtension
 {
@@ -17,16 +24,16 @@ interface IExtension
 
 type ExtensionsKeys = "extension.awesomeDoc" | "extension.awesomifyEditor" | "extension.awesomifyExplorer"
 
+interface PositionField
+{
+	line: number;
+	char: number;
+}
+
 interface Position
 {
-	start?: {
-		line?: number;
-		char?: number;
-	}
-	end: {
-		line: number;
-		char: number;
-	}
+	start?: Partial<PositionField>;
+	end: PositionField;
 }
 
 interface RequiredPosition

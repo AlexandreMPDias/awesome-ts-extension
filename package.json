@@ -2,7 +2,7 @@
 	"name": "awesome-ts-extension",
 	"displayName": "awesome-ts-extension",
 	"description": "Extensions to help usage of Typescript on VsCode",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"engines": {
 		"vscode": "^1.36.0"
 	},
@@ -60,7 +60,7 @@
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "yarn run compile",
-		"test": "node ./out/test/runTest.js"
+		"test": "yarn jest"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.1",
