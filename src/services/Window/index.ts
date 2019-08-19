@@ -11,8 +11,9 @@ class Help
 		});
 	}
 
-	running(str: string) {
-		if(config.property('showRunning')) {
+	running (str: string)
+	{
+		if (config.property('showRunning')) {
 			vscode.window.showInformationMessage("Running: " + str);
 		}
 	}
