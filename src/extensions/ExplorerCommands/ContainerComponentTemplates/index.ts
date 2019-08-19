@@ -1,25 +1,35 @@
-import { ExportFileTemplate, FileTemplate, IFileTemplateArgs } from '../types';
+import { ExportFileTemplate, FileTemplate, IFileTemplateArgs } from "../types";
 
-function space (word: string): string
-{
-	return word.replace(/([a-z])([A-Z])/, '$1 $2');
+function space(word: string): string {
+  return word.replace(/([a-z])([A-Z])/, "$1 $2");
 }
 
-const __indexContent: ExportFileTemplate = ({ upperCamelCase, lowerCamelCase }: IFileTemplateArgs) => `// Local Imports
+const __indexContent: ExportFileTemplate = ({
+  upperCamelCase,
+  lowerCamelCase
+}: IFileTemplateArgs) => `// Local Imports
 import withContainer from './${lowerCamelCase}';
 
 // Types Imports
 import { I${upperCamelCase}ChildProps } from './${lowerCamelCase}Types';
 
-// tslint:disable-next-line: no-namespace
-export namespace ${lowerCamelCase} {
-	export type Props = I${upperCamelCase}ChildProps;
-	export const wrap = withContainer;
+// // tslint:disable-next-line: no-namespace
+// export namespace ${lowerCamelCase} {
+// 	export type Props = I${upperCamelCase}ChildProps;
+// 	export const wrap = withContainer;
+// }
+
+export const ${lowerCamelCase} {
+	Props: {} as I${upperCamelCase}ChildProps,
+	wrap: withContainer
 }
 
-`
+`;
 
-const __container: ExportFileTemplate = ({ upperCamelCase, lowerCamelCase }: IFileTemplateArgs) => `// Global Imports
+const __container: ExportFileTemplate = ({
+  upperCamelCase,
+  lowerCamelCase
+}: IFileTemplateArgs) => `// Global Imports
 import React, { Component } from 'react';
 
 // Package Imports
@@ -83,9 +93,12 @@ function ${lowerCamelCase}HOC<T>(
 
 export default ${lowerCamelCase}HOC;	
 
-`
+`;
 
-const __type: ExportFileTemplate = ({ upperCamelCase, lowerCamelCase }: IFileTemplateArgs) => `
+const __type: ExportFileTemplate = ({
+  upperCamelCase,
+  lowerCamelCase
+}: IFileTemplateArgs) => `
 
 /**
  * Props to be received from the Container Parents.
@@ -144,12 +157,12 @@ type PureDumbProps<T> = Omit<Props<T>, keyof I${upperCamelCase}ChildProps>;
 
 export type ClassProps<T> = I${upperCamelCase}ParentProps & PureDumbProps<T>;
 
-`
+`;
 
 const exportDefault: FileTemplate = {
-	index: __indexContent,
-	types: __type,
-	container: __container
-}
+  index: __indexContent,
+  types: __type,
+  container: __container
+};
 
 export default exportDefault;
