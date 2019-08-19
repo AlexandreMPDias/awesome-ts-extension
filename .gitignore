@@ -3,3 +3,5 @@ node_modules
 .vscode-test/
 *.vsix
 .env
+.env.json
+*.auto.bat

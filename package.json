@@ -1,77 +1,86 @@
 {
-	"name": "awesome-ts-extension",
-	"displayName": "awesome-ts-extension",
-	"description": "Extensions to help usage of Typescript on VsCode",
-	"version": "0.2.0",
-	"engines": {
-		"vscode": "^1.36.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/AlexandreMPDias/awesome-ts-extension"
-	},
-	"categories": [
-		"Other"
-	],
-	"publisher": "AlexandreDias",
-	"activationEvents": [
-		"onCommand:extension.awesomeDoc",
-		"onCommand:extension.awesomifyEditor",
-		"onCommand:extension.awesomifyExplorer"
-	],
-	"main": "./out/extension.js",
-	"contributes": {
-		"commands": [{
-				"command": "extension.awesomeDoc",
-				"title": "Awesome Doc"
-			},
-			{
-				"command": "extension.awesomifyEditor",
-				"title": "Awesomify"
-			},
-			{
-				"command": "extension.awesomifyExplorer",
-				"title": "Awesomify"
-			}
-		],
-		"menus": {
-			"editor/context": [{
-					"when": "editorTextFocus",
-					"command": "extension.awesomeDoc",
-					"group": "YourGroup@1"
-				},
-				{
-					"command": "extension.awesomifyEditor",
-					"group": "YourGroup@1"
-				}
-			],
-			"explorer/context": [{
-				"when": "explorerResourceIsFolder",
-				"command": "extension.awesomifyExplorer",
-				"group": "YourGroup@1",
-				"args": [
-					"${relativePath}"
-				]
-			}]
-		}
-	},
-	"scripts": {
-		"vscode:prepublish": "yarn run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"pretest": "yarn run compile",
-		"test": "yarn jest"
-	},
-	"devDependencies": {
-		"@types/glob": "^7.1.1",
-		"@types/jest": "^24.0.17",
-		"@types/node": "^10.12.21",
-		"@types/vscode": "^1.36.0",
-		"glob": "^7.1.4",
-		"jest": "^24.9.0",
-		"ts-jest": "^24.0.2",
-		"tslint": "^5.12.1",
-		"typescript": "^3.3.1",
-		"vscode-test": "^1.0.0-next.0"
-	}
+  "name": "awesome-ts-extension",
+  "displayName": "awesome-ts-extension",
+  "description": "Extensions to help usage of Typescript on VsCode",
+  "version": "0.2.0",
+  "engines": {
+    "vscode": "^1.36.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlexandreMPDias/awesome-ts-extension"
+  },
+  "categories": [
+    "Other"
+  ],
+  "publisher": "AlexandreDias",
+  "activationEvents": [
+    "onCommand:extension.awesomeDoc",
+    "onCommand:extension.awesomifyEditor",
+    "onCommand:extension.awesomifyExplorer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.awesomeDoc",
+        "title": "Awesome Doc"
+      },
+      {
+        "command": "extension.awesomifyEditor",
+        "title": "Awesomify"
+      },
+      {
+        "command": "extension.awesomifyExplorer",
+        "title": "Awesomify"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorTextFocus",
+          "command": "extension.awesomeDoc",
+          "group": "YourGroup@1"
+        },
+        {
+          "command": "extension.awesomifyEditor",
+          "group": "YourGroup@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "explorerResourceIsFolder",
+          "command": "extension.awesomifyExplorer",
+          "group": "YourGroup@1",
+          "args": [
+            "${relativePath}"
+          ]
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run compile",
+    "env": "node ./scripts/loadEnv.js & ./scripts/generated/env.auto.bat",
+    "update": "yarn env & node ./scripts/publish.js & ./scripts/generated/publish.auto.bat",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "yarn run compile",
+    "test": "yarn jest"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.1",
+    "@types/jest": "^24.0.17",
+    "@types/node": "^10.12.21",
+    "@types/vscode": "^1.36.0",
+    "glob": "^7.1.4",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.1",
+    "vscode-test": "^1.0.0-next.0"
+  },
+  "dependencies": {
+    "dotenv": "^8.1.0"
+  }
 }
