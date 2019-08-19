@@ -6,7 +6,7 @@ function space (word: string): string
 }
 
 const __indexContent: ExportFileTemplate = ({ upperCamelCase, lowerCamelCase }: IFileTemplateArgs) => `// Local Imports
-import withContainer from './${lowerCamelCase}Types';
+import withContainer from './${lowerCamelCase}';
 
 // Types Imports
 import { I${upperCamelCase}ChildProps } from './${lowerCamelCase}Types';
@@ -21,8 +21,6 @@ export namespace ${lowerCamelCase} {
 
 const __container: ExportFileTemplate = ({ upperCamelCase, lowerCamelCase }: IFileTemplateArgs) => `// Global Imports
 import React, { Component } from 'react';
-import { bindActionCreators, Dispatch } from 'redux';
-import { connect } from 'react-redux';
 
 // Package Imports
 import sharedStore from '@liberedu/redux-store';
@@ -30,8 +28,8 @@ import { ReduxService } from '@liberedu/services';
 
 // Types Imports
 import { 
-	I${upperCamelCase}ParentProps,
-	I${upperCamelCase}ReduxProps,
+	I${upperCamelCase}Actions,
+	I${upperCamelCase}Selectors,
 	I${upperCamelCase}ChildProps,
 	I${upperCamelCase}Props,
 	I${upperCamelCase}State,
@@ -66,24 +64,21 @@ function ${lowerCamelCase}HOC<T>(
 	const select = sharedStore.selectors;
 	const action = sharedStore.actions;
 	
-	const mapStateToProps = (state: any) => {
-		return {
-			// sessions: select.core.[...],
-		};
+	const selector: { [key in keyof I${upperCamelCase}Selectors]: (state: any) => I${upperCamelCase}Selectors[key] } = {
+		// user: select.core.auth.userSelector,
 	};
 
-	const mapDispatchToProps = (dispatch: Dispatch) => {
-		return bindActionCreators({
-			// fetchSomething: action.core.[...],
-		}, dispatch);
+	const actions: I${upperCamelCase}Actions = {
+		// fetch: action.core.auth.fetchSomething
 	};
 
-	const connection = connect(
-		mapStateToProps,
-		mapDispatchToProps
-	);
+	return ReduxService.betterConnect(selector, actions)(
+		${upperCamelCase}HOC
+	) as unknown as React.ComponentClass<ClassProps<T>>;
 
-	return (connection(${upperCamelCase}HOC) as unknown) as React.ComponentClass<ClassProps<T>>;
+	// return ReduxService.typedConnect<I${upperCamelCase}Selectors, I${upperCamelCase}Actions>(selector, actions)(
+	// 	${upperCamelCase}HOC
+	// ) as React.ComponentClass<ClassProps<T>>;
 }
 
 export default ${lowerCamelCase}HOC;	
@@ -101,11 +96,17 @@ export interface I${upperCamelCase}ParentProps {
 }
 
 /**
- * The Container's ReduxProps
- * Properties that come from the Redux-Store
+ * The Container's Selectors from the Redux Store
  */
-export interface I${upperCamelCase}ReduxProps {
+export interface I${upperCamelCase}Selectors {
 
+}
+
+/**
+ * The Container's Actions from the Redux Store
+ */
+export interface I${upperCamelCase}Actions {
+	
 }
 
 /**
@@ -124,6 +125,12 @@ export interface I${upperCamelCase}State {
 }
 
 // ! The following interfaces/types should not be touched.
+
+/**
+ * The Container's ReduxProps
+ * Properties that come from the Redux-Store
+ */
+export type I${upperCamelCase}ReduxProps = I${upperCamelCase}Selectors & I${upperCamelCase}Actions
 
 /**
  * I${upperCamelCase}'s Props

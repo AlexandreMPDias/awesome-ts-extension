@@ -116,7 +116,7 @@ function generateContainerTemplate (
 			content: template.index({ lowerCamelCase, upperCamelCase })
 		},
 		{
-			fileName: `${lowerCamelCase}Container.tsx`,
+			fileName: `${lowerCamelCase}.tsx`,
 			content: template.container({ lowerCamelCase, upperCamelCase })
 		},
 		{
@@ -211,7 +211,7 @@ async function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 			if (dirName && dirName.length > 0) {
 				const cfn = filterPath(dirName);
 				const templates: IFinalTemplate[] = generateContainerTemplate(
-					cfn,
+					cfn + "Container",
 					containerComponentTemplates
 				);
 				handleTemplateCreation(selectedDirectory, cfn, templates);
