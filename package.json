@@ -2,7 +2,7 @@
   "name": "awesome-ts-extension",
   "displayName": "awesome-ts-extension",
   "description": "Extensions to help usage of Typescript on VsCode",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "engines": {
     "vscode": "^1.36.0"
   },
