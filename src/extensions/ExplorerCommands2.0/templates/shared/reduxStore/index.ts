@@ -1,4 +1,4 @@
-import { ExportFileTemplate, FileTemplate, IFileTemplateArgs } from '../types';
+import { ExportFileTemplate, FileTemplate, IFileTemplateArgs } from '../../../types';
 
 const __actions: ExportFileTemplate = ({ upperCamelCase, lowerCamelCase }: IFileTemplateArgs) => `// Package Imports
 import {  } from '@liberedu/types';
@@ -140,13 +140,27 @@ export interface I${upperCamelCase}Error {
 
 export type ${upperCamelCase}ActionTypes = I${upperCamelCase}Error;
 `
-const exportDefault: FileTemplate = {
-	actions: __actions,
-	operations: __operations,
-	reducers: __reducers,
-	selectors: __selectors,
-	types: __types
-
+const exportDefault = {
+	actions: {
+		content: __actions,
+		fileName: (fN: string) => `store/${fN}Actions.ts`,
+	},
+	operations: {
+		content: __operations,
+		fileName: (fN: string) => `store/${fN}Operations.ts`,
+	},
+	reducers: {
+		content: __reducers,
+		fileName: (fN: string) => `store/${fN}Reducers.ts`,
+	},
+	selectors: {
+		content: __selectors,
+		fileName: (fN: string) => `store/${fN}Selectors.ts`,
+	},
+	types: {
+		content: __types,
+		fileName: (fN: string) => `store/${fN}Types.ts`,
+	}
 }
 
 export default exportDefault;
