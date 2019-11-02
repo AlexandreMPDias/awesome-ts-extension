@@ -1,6 +1,6 @@
-import { ExportFileTemplate } from '../../../types';
+import { IFileTemplateArgs, ITemplateExporter } from '../../types';
 
-const __indexContent = (a: any) => `// Global Imports
+const __indexContent = (args: IFileTemplateArgs) => `// Global Imports
 import React, { useState, useEffect } from 'react';
 import { View, Text } from 'react-native';
 
@@ -9,10 +9,10 @@ import { IconKeys } from '@liberedu/assets';  // '../../assets';
 import {  } from '@liberedu/services';
 
 // Style and Types Imports
-import Style, {} from './${a.lowerCamelCase}Styles';
-import { I${a.upperCamelCase}Props, I${a.upperCamelCase}State } from './${a.lowerCamelCase}Types';
+import Style, {} from './${args.lowerCamelCase}Styles';
+import { I${args.upperCamelCase}Props, I${args.upperCamelCase}State } from './${args.lowerCamelCase}Types';
 
-const withState = () : I${a.upperCamelCase}State => {
+const withState = () : I${args.upperCamelCase}State => {
 
     const [ text, setText ] = useState<string>('weee');
 
@@ -27,9 +27,9 @@ const withState = () : I${a.upperCamelCase}State => {
 }
 
 /**
- * Component ${a.upperCamelCase.replace(/([a-z])([A-Z])/, '$1 $2')}
+ * Component ${args.humanCase}
  */
-const ${a.upperCamelCase} : React.FunctionComponent<I${a.upperCamelCase}Props> = (props) => {
+const ${args.upperCamelCase} : React.FunctionComponent<I${args.upperCamelCase}Props> = (props) => {
     
     const state = withState();
 
@@ -39,10 +39,10 @@ const ${a.upperCamelCase} : React.FunctionComponent<I${a.upperCamelCase}Props> =
 		</View>
 }
 
-export default ${a.upperCamelCase}	
+export default ${args.upperCamelCase}	
 `
 
-const __style = (a: any) => `// Global Imports
+const __style = (args: IFileTemplateArgs) => `// Global Imports
 import { StyleSheet } from 'react-native';
 
 // Package
@@ -58,37 +58,39 @@ export default StyleSheet.create({
 })
 `
 
-const __type = (a: any) => `// Global Imports
+const __type = (args: IFileTemplateArgs) => `// Global Imports
 import { StyleSheet, ViewStyle, StyleProp, TextStyle } from 'react-native';
 
 /**
- * I${a.upperCamelCase}'s Props
+ * ${args.humanCase}'s Props
  */
-export interface I${a.upperCamelCase}Props {
+export interface I${args.upperCamelCase}Props {
 
 }
 
 /**
- * I${a.upperCamelCase}'s State
+ * ${args.humanCase}'s State
  */
-export interface I${a.upperCamelCase}State {
+export interface I${args.upperCamelCase}State {
     text: string;
 }
 `
-
-const exportDefault = {
-    index: {
-        content: __indexContent,
-        fileName: (fN: string) => `${fN}/index.tsx`
-    },
-    styles: {
-        content: __style,
-        fileName: (fN: string) => `${fN}/${fN}Styles.ts`
-    },
-    types: {
-        content: __type,
-        fileName: (fN: string) => `${fN}/${fN}Types.ts`
-    },
+const exportDefault: ITemplateExporter<'native', 'functionComponent'> = {
+	generator: {
+		index: {
+			content: __indexContent,
+			fileName: (fN: string) => `${fN}/index.tsx`
+		},
+		styles: {
+			content: __style,
+			fileName: (fN: string) => `${fN}/${fN}Styles.ts`
+		},
+		types: {
+			content: __type,
+			fileName: (fN: string) => `${fN}/${fN}Types.ts`
+		},
+	},
+	optionQuery: "Create Functional Component"
 }
 
 export default exportDefault;

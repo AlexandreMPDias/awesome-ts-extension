@@ -1,4 +1,3 @@
-
 /**
  * Valid Template Keys
  */

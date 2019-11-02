@@ -1,11 +1,11 @@
-import { ITemplateSimple, ITemplates } from './types';
+import { ITemplates } from './types';
 
 import native from './native';
 import shared from './shared';
 
 const dftExport: ITemplates = {
-    native,
-    shared
+	native,
+	shared
 }
 
 export default dftExport;

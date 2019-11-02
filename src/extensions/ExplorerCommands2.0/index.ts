@@ -2,22 +2,22 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { _editor, window } from "../../services";
-import { CommandKeys, IFinalTemplate, Key, StoreTemplateKeys } from "./types";
+import * as templateTypes from "./templates/types";
 
 import templateGenerators from './templates';
 
 type TGen = typeof templateGenerators;
+type NamespaceKeys<T extends keyof TGen> = keyof TGen[T];
 
+String.prototype.capitalize = function ()
+{
+	return this.charAt(0).toUpperCase() + this.slice(1);
+};
 
-// String.prototype.capitalize = function ()
-// {
-// 	return this.charAt(0).toUpperCase() + this.slice(1);
-// };
-
-// String.prototype.uncapitalize = function ()
-// {
-// 	return this.charAt(0).toLowerCase() + this.slice(1);
-// };
+String.prototype.uncapitalize = function ()
+{
+	return this.charAt(0).toLowerCase() + this.slice(1);
+};
 
 const resolve = {
 	namespace: {
@@ -29,64 +29,46 @@ const resolve = {
 		{
 			return key === 'shared';
 		}
+	},
+	subOption: (namespace: string, selectedSubOption: string | undefined): string | undefined =>
+	{
+		if (selectedSubOption) {
+			const subGen = templateGenerators[namespace as keyof TGen];
+			let found: any;
+			Object.entries(subGen).some(subGenEntry =>
+			{
+				const [key, value] = subGenEntry;
+				if (value.optionQuery === selectedSubOption) {
+					found = key;
+					return true;
+				}
+			})
+			return found;
+		}
+		return undefined;
+	}
+}
+
+function getCasedName (name: string): templateTypes.IFileTemplateArgs
+{
+	return {
+		lowerCamelCase: name.uncapitalize(),
+		upperCamelCase: name.capitalize(),
+		humanCase: name.replace(/([a-z])([A-Z])/g, '$1 $2').capitalize()
+
 	}
 }
 
 function filterPath (input: string, uncapitalize: boolean = true): string
 {
-	if (uncapitalize) {
-		return input
-			.replace(/-/g, "_")
-			.replace(/\W+/g, "")
-			.uncapitalize();
-	}
-	return input.replace(/-/g, "_").replace(/\W+/g, "");
+	const filtered = input.replace(/-/g, "_").replace(/\W+/g, "")
+	return uncapitalize ? filtered.uncapitalize() : filtered;
 }
 
-function createFile (source: string, fileName: string, content: string)
-{
-	const editor = _editor.getEditor();
-	if (editor) {
-		const filePath = path.join(source, fileName);
-		fs.writeFileSync(filePath, content, "utf8");
-	}
-}
-
-function createNewDirectory (dir: string): boolean
-{
-	if (fs.existsSync(dir)) return false;
-	try {
-		fs.mkdirSync(dir, { recursive: true });
-		return true;
-	} catch (e) {
-		console.error(e);
-		return false;
-	}
-}
-
-function handleTemplateCreation (
-	source: string,
-	folderName: string,
-	templates: IFinalTemplate[]
-)
-{
-	const newSource = path.join(source, folderName);
-	if (createNewDirectory(newSource)) {
-		templates.forEach((template: IFinalTemplate) =>
-		{
-			const { fileName, content } = template;
-			window.show(`Creating file ${fileName}`);
-			createFile(newSource, fileName, content);
-		});
-	} else {
-		_editor.error(`Failed creating directory ${newSource}`);
-	}
-}
-
-function createOne (template: IFinalTemplate)
+function createOne (template: templateTypes.IFinalTemplate)
 {
 	const [fileName, ...baseDirs] = template.fileName.split(path.sep).reverse();
-	const baseDir = path.join(...baseDirs);
+	const baseDir = path.join(...baseDirs.reverse());
 
 	if (!fs.existsSync(baseDir)) {
 		fs.mkdirSync(baseDir, { recursive: true });
@@ -96,22 +78,12 @@ function createOne (template: IFinalTemplate)
 	fs.writeFileSync(template.fileName, template.content, { encoding: 'utf-8' });
 }
 
-function getCasedName (name: string): { lowerCamelCase: string, upperCamelCase: string }
+function resolveTemplate (namespace: string, cleanKey: string, name: string, baseDir: string): templateTypes.IFinalTemplate[]
 {
-	return {
-		lowerCamelCase: name.uncapitalize(),
-		upperCamelCase: name.capitalize()
-	}
-}
-
-function resolveTemplate (namespace: string, cleanKey: string, name: string, baseDir: string): IFinalTemplate[]
-{
-	type TGen = typeof templateGenerators;
-	type NamespaceKeys<T extends keyof TGen> = keyof TGen[T];
-	const finals: IFinalTemplate[] = [];
+	const finals: templateTypes.IFinalTemplate[] = [];
 	const casedName = getCasedName(name);
 
-	const resolveGenerator = (generator: any) => Object.values<any>(generator).map((template) => ({
+	const resolveGenerator = (generator: any) => Object.values<any>(generator.generator).map((template) => ({
 		content: template.content(casedName),
 		fileName: path.join(baseDir, template.fileName(name).replace('/', path.sep))
 	}));
@@ -133,11 +105,33 @@ function resolveTemplate (namespace: string, cleanKey: string, name: string, bas
 	return finals;
 }
 
+function ifCancel (option: string | undefined): option is undefined
+{
+	const isCancel = option === 'Cancel' || option === undefined;
+	if (isCancel) {
+		window.show(`Awesomefication Cancelled`);
+	}
+	return isCancel;
+}
+
+function isKey (key: string): key is keyof TGen
+{
+	return Object.keys(templateGenerators).includes(key.toLowerCase());
+}
+
+function getAllOptions (key?: string)
+{
+	if (key && isKey(key)) {
+		return Object.values(templateGenerators[key]).map(generators => generators.optionQuery);
+	}
+	return Object.keys(templateGenerators).map(k => k.capitalize());
+}
 
 function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 {
-	const catched = () =>
+	const catched = (e?: any) =>
 	{
+		console.log(e);
 		window.show(`Awesomefication Cancelled`);
 	};
 	const invalidOption = (opt?: string) =>
@@ -145,30 +139,37 @@ function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 		window.show(`[ ${opt} ] is not a valid option`);
 		catched();
 	}
-	const optionsMapping = {
-		root: ['Native', 'Shared'],
-		Native: ['Create Function Component'],
-		Shared: ['Create Redux Store']
-	}
 
-	_editor.dropdown(optionsMapping.root.concat('Cancel')).then((option) =>
+	const rootOptions = getAllOptions();
+	_editor.dropdown(rootOptions).then((rawOption) =>
 	{
-		if (option && Object.keys(optionsMapping).includes(option)) {
-			const subOptions = (optionsMapping as any)[option]
-			_editor.dropdown(subOptions.concat('Cancel')).then(subOption =>
+		if (ifCancel(rawOption)) {
+			return;
+		}
+		console.log(rootOptions)
+		if (rootOptions.includes(rawOption)) {
+			const option = rawOption.toLowerCase();
+			const subOptions = getAllOptions(option);
+			_editor.dropdown(subOptions).then(subOption =>
 			{
-				const key = `${subOption && (subOptions as any)[subOption]}`;
-				const cleanKey = key.replace(/Create (.+)/, '$1').replace(/\s/g, '').uncapitalize();
+				if (ifCancel(subOption)) {
+					return;
+				}
+				const cleanKey = resolve.subOption(option, subOption);
 				if (cleanKey && option) {
-					_editor.getInput("How we gonna call the Monstrao?").then(name =>
+					_editor.getInput("How are we gonna call the Monstrao?").then(name =>
 					{
 						if (name && name.length > 0) {
-							console.log({ line: 154, option, key, cleanKey, name, filtered: filterPath(name), dirPath: dirPath.fsPath });
-							const templates = resolveTemplate(option as any, cleanKey, name, dirPath.fsPath);
-							if (templates) {
-								handleTemplateCreation(dirPath.fsPath, filterPath(name), templates);
-							} else {
-								window.error(`Invalid template \`${option}\`.\`${cleanKey}\` with name [ ${name} ]`);
+							try {
+								const templates = resolveTemplate(option.toLowerCase(), cleanKey, filterPath(name), dirPath.fsPath);
+								console.log(templates);
+								if (templates) {
+									templates.forEach(createOne);
+								} else {
+									window.error(`Invalid template \`${option}\`.\`${cleanKey}\` with name [ ${name} ]`);
+								}
+							} catch (e) {
+								console.error(e);
 							}
 						} else {
 							catched();
@@ -177,112 +178,77 @@ function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
 				}
 			}).catch(catched);
 		} else {
-			invalidOption(option);
+			invalidOption(rawOption);
 		}
 	}).catch(catched);
 }
 
-// async function command (context: vscode.ExtensionContext, dirPath: vscode.Uri)
-// {
-// 	const optionsKeys: CommandKeys[] = [
-// 		"Native Component",
-// 		"Web Component",
-// 		"Container",
-// 		"Redux-Store Directory"
-// 	];
-// 	const options: string[] = [
-// 		...optionsKeys.map(option => `Create Awesome ${option}`),
-// 		"Cancel"
-// 	];
-// 	const selectedDirectory = dirPath.fsPath;
-// 	const selected = (await _editor.dropdown(options)) as CommandKeys;
-// 	const selectedKey = selected.replace(
-// 		/^Create Awesome (.+)/,
-// 		"$1"
-// 	) as CommandKeys;
-// 	// window.show(vscode.Uri.file);
-// 	switch (selectedKey) {
-// 		case "Native Component": {
-// 			window.show(`Running: ${selected}`);
-// 			const dirName = await _editor.getInput("Name your Awesome Component");
-// 			if (dirName && dirName.length > 0) {
-// 				const cfn = filterPath(dirName);
-// 				const templates: IFinalTemplate[] = generateComponentTemplate(
-// 					cfn,
-// 					nativeComponentsTemplates
-// 				);
-// 				handleTemplateCreation(selectedDirectory, cfn, templates);
-// 			} else {
-// 				window.show(`Awesomefication Cancelled`);
-// 			}
-// 			break;
-// 		}
-// 		case "Web Component": {
-// 			window.show(`Running ${selected}`);
-// 			const dirName = await _editor.getInput("Name your Awesome Component");
-// 			if (dirName && dirName.length > 0) {
-// 				const cfn = filterPath(dirName);
-// 				const templates: IFinalTemplate[] = generateComponentTemplate(
-// 					cfn,
-// 					webComponentsTemplates
-// 				);
-// 				handleTemplateCreation(selectedDirectory, cfn, templates);
-// 			} else {
-// 				window.show(`Awesomefication Cancelled`);
-// 			}
-// 			break;
-// 		}
-// 		case "Container": {
-// 			window.show(`Running ${selected}`);
-// 			const dirName = await _editor.getInput("Name your Awesome Container");
-// 			if (dirName && dirName.length > 0) {
-// 				const cfn = filterPath(dirName);
-// 				const templates: IFinalTemplate[] = generateContainerTemplate(
-// 					cfn.replace(/Container$/, "") + "Container",
-// 					containerComponentTemplates
-// 				);
-// 				handleTemplateCreation(selectedDirectory, cfn, templates);
-// 			} else {
-// 				window.show(`Awesomefication Cancelled`);
-// 			}
-// 			break;
-// 		}
-// 		case "Redux-Store Directory": {
-// 			window.show(`Running ${selected}`);
-// 			const dirName = await _editor.getInput("Name your Awesome Store");
-// 			if (dirName && dirName.length > 0) {
-// 				const cfn = filterPath(dirName);
-// 				const templates: IFinalTemplate[] = generateReduxTemplate(
-// 					cfn,
-// 					reduxStoreTemplates
-// 				);
-// 				const chdir = path.join(selectedDirectory, cfn);
-// 				createNewDirectory(chdir);
-// 				handleTemplateCreation(chdir, "store", templates);
-// 			} else {
-// 				window.show(`Awesomefication Cancelled`);
-// 			}
-// 			break;
-// 		}
-// 		case "Cancel": {
-// 			window.show(`Awesomefication Cancelled`);
-// 			break;
-// 		}
-// 		default: {
-// 			if (selected === undefined) {
-// 				window.show(`Awesomefication Cancelled`);
-// 			} else {
-// 				_editor.error(`Invalid Option ${selected}.\nAwesomefication Cancelled`);
-// 			}
-// 		}
-// 	}
-// }
+async function commandSync (context: vscode.ExtensionContext, dirPath: vscode.Uri)
+{
+	const catched = (e?: any) =>
+	{
+		console.log(e);
+		window.show(`Awesomefication Cancelled`);
+	};
+	const invalidOption = (opt?: string) =>
+	{
+		window.show(`[ ${opt} ] is not a valid option`);
+		catched();
+	}
+
+	try {
+		const rootOptions = getAllOptions();
+
+		const rawOption = await _editor.dropdown(rootOptions);
+		if (ifCancel(rawOption)) {
+			return;
+		}
+
+		if (!rootOptions.includes(rawOption)) {
+			invalidOption(rawOption);
+			return;
+		}
+
+		const option = rawOption.toLowerCase();
+		const subOptions = getAllOptions(option);
+
+		const subOption = await _editor.dropdown(subOptions);
+		if (ifCancel(subOption)) {
+			return;
+		}
+
+		const cleanKey = resolve.subOption(option, subOption);
+		if (!cleanKey) {
+			catched();
+			return;
+		}
+
+		const name = await _editor.getInput("How are we gonna call the Monstrao?");
+
+		if (!name || name.length <= 0) {
+			catched();
+			return;
+		}
+
+		const templates = resolveTemplate(option.toLowerCase(), cleanKey, filterPath(name), dirPath.fsPath);
+		console.log(templates);
+		if (templates) {
+			templates.forEach(createOne);
+		} else {
+			window.error(`Invalid template \`${option}\`.\`${cleanKey}\` with name [ ${name} ]`);
+			return;
+		}
+
+	} catch (e) {
+		catched(e);
+	}
+}
 
 function deactivate () { }
 
 const exp: IExtension = {
 	name: "extension.awesomifyExplorer",
-	command: command,
+	command: commandSync,
 	deactivate
 };
 

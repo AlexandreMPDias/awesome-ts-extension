@@ -41,9 +41,10 @@ class Help
 	 * Creates a Dropdown with the options received
 	 * @param {string[]} items is the options
 	 */
-	async dropdown (items: string[])
+	async dropdown (items: string[], noCancel?: boolean)
 	{
-		return await vscode.window.showQuickPick(items);
+		const options = noCancel ? items : items.concat('Cancel');
+		return await vscode.window.showQuickPick(options);
 	}
 
 	/**
