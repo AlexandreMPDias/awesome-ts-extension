@@ -3,6 +3,7 @@ import { IFileTemplateArgs, ITemplateExporter } from '../../types';
 const __indexContent = (args: IFileTemplateArgs) => `// Global Imports
 import React, { useState, useEffect } from 'react';
 import { View, Text } from 'react-native';
+// import { useImmer } from 'user-immer';
 
 // Package Imports
 import { IconKeys } from '@liberedu/assets';  // '../../assets';
@@ -12,26 +13,12 @@ import {  } from '@liberedu/services';
 import Style, {} from './${args.lowerCamelCase}Styles';
 import { I${args.upperCamelCase}Props, I${args.upperCamelCase}State } from './${args.lowerCamelCase}Types';
 
-const withState = () : I${args.upperCamelCase}State => {
-
-    const [ text, setText ] = useState<string>('weee');
-
-    return {
-        get text() {
-            return text;
-        },
-        set text(x : string) {
-            setText(x);
-        }
-    }
-}
-
 /**
  * Component ${args.humanCase}
  */
 const ${args.upperCamelCase} : React.FunctionComponent<I${args.upperCamelCase}Props> = (props) => {
     
-    const state = withState();
+    const [state, setState] = useState<I${args.upperCamelCase}State>;
 
     return 
         <View style={Style.mainContainer}>
